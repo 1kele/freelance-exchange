@@ -1,3 +1,8 @@
 .venv/
 .env
 .env-test
+
+.idea/
+__pycache__/
+*.pyc
+.pytest_cache/
