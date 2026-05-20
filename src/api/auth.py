@@ -3,7 +3,7 @@ from datetime import datetime
 from fastapi import APIRouter, Response, Body
 
 from src.api.dependencies import DBDep, CurrentUserDep
-from src.celery_tasks.tasks import create_report
+from src.celery_tasks.tasks import create_report_exel, create_report_pdf
 from src.exceptions import ObjectNotFoundException, WrongPasswordException, ObjectNotFoundHTTPException, \
     WrongPasswordHTTPException, PermissionDeniedHTTPException, PermissionDeniedException, UserIsBlockedException, \
     UserIsBlockedHTTPException, UserAlreadyExistsException, UserAlreadyExistsHTTPException
@@ -64,31 +64,49 @@ async def get_me(
     return {"data": result}
 
 
-@router.post("/report")
-async def report(
+@router.post("/report/xlsx")
+async def create_exel_report(
     date_from: datetime,
     date_to: datetime,
     current_user: CurrentUserDep,
 ):
-    try:
-        create_report.delay(
-            date_from.isoformat(),
-            date_to.isoformat(),
-            current_user.id,
-            current_user.role,
-            current_user.email,
-            current_user.first_name,
-            current_user.middle_name,
-            current_user.last_name,
-            current_user.rating
-     )
-    except Exception as e:
-        print(f"CELERY ERROR: {e}")
-        raise
+    create_report_exel.delay(
+        date_from.isoformat(),
+        date_to.isoformat(),
+        current_user.id,
+        current_user.role,
+        current_user.email,
+        current_user.first_name,
+        current_user.middle_name,
+        current_user.last_name,
+        current_user.rating
+    )
 
     return {"status": "OK"}
 
-@router.patch("/me")
+
+@router.post("/report/pdf")
+async def create_pdf_report(
+    date_from: datetime,
+    date_to: datetime,
+    current_user: CurrentUserDep,
+):
+    create_report_pdf.delay(
+        date_from.isoformat(),
+        date_to.isoformat(),
+        current_user.id,
+        current_user.role,
+        current_user.email,
+        current_user.first_name,
+        current_user.middle_name,
+        current_user.last_name,
+        current_user.rating
+    )
+
+    return {"status": "OK"}
+
+
+@router.post("/me")
 async def partially_update_profile(
     db: DBDep,
     data: UserPatch,

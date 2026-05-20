@@ -11,11 +11,22 @@ from src.schemas.order import OrderStatus
 from src.schemas.user import AllRoles
 from fastapi_mail import MessageSchema, MessageType
 from src.mail import fastmail
+from datetime import datetime
+from reportlab.lib import colors
+from reportlab.lib.pagesizes import A4
+from reportlab.platypus import (
+    SimpleDocTemplate,
+    Table,
+    TableStyle,
+    Paragraph,
+    Spacer
+)
+from reportlab.lib.styles import getSampleStyleSheet
 
 
 
 @celery_instance.task
-def create_report(
+def create_report_exel(
         date_from: str,
         date_to: str,
         user_id: int,
@@ -26,7 +37,7 @@ def create_report(
         user_last_name: str,
         user_rating: float
 ):
-    asyncio.run(_create_report_async(
+    asyncio.run(_create_exel_report_async(
         date_from,
         date_to,
         user_id,
@@ -38,7 +49,31 @@ def create_report(
         user_rating
     ))
 
-async def _create_report_async(
+@celery_instance.task
+def create_report_pdf(
+        date_from: str,
+        date_to: str,
+        user_id: int,
+        user_role: AllRoles,
+        user_email: str,
+        user_first_name: str,
+        user_middle_name: str,
+        user_last_name: str,
+        user_rating: float
+):
+    asyncio.run(_create_pdf_report_async(
+        date_from,
+        date_to,
+        user_id,
+        user_role,
+        user_email,
+        user_first_name,
+        user_middle_name,
+        user_last_name,
+        user_rating
+    ))
+
+async def _create_exel_report_async(
         date_from: str,
         date_to: str,
         user_id: int,
@@ -166,4 +201,166 @@ async def _create_report_async(
             subtype=MessageType.html,
             attachments=[filename]
         )
-        await fastmail.send_message(message)
+        try:
+            await fastmail.send_message(message)
+            print("EMAIL SENT")
+
+        except Exception as e:
+            print("EMAIL ERROR:", e)
+
+
+async def _create_pdf_report_async(
+        date_from: str,
+        date_to: str,
+        user_id: int,
+        user_role: AllRoles,
+        user_email: str,
+        user_first_name: str,
+        user_middle_name: str,
+        user_last_name: str,
+        user_rating: float,
+):
+    date_from = datetime.fromisoformat(date_from)
+    date_to = datetime.fromisoformat(date_to)
+
+    async with DBManager(session_factory=async_session_maker_null_pool) as db:
+        if user_role == AllRoles.customer:
+            orders = await db.order.get_by_date_range(
+                date_from=date_from,
+                date_to=date_to,
+                customer_id=user_id
+            )
+
+        elif user_role == AllRoles.freelancer:
+            orders = await db.order.get_filter_by(
+                date_from=date_from,
+                date_to=date_to,
+                customer_id=user_id
+            )
+
+        else:
+            raise ObjectNotFoundHTTPException
+
+        filename = (
+            f"report_{user_id}_"
+            f"{datetime.now().strftime('%Y%m%d_%H%M%S')}.pdf"
+        )
+
+        doc = SimpleDocTemplate(
+            filename,
+            pagesize=A4,
+            rightMargin=20,
+            leftMargin=20,
+            topMargin=20,
+            bottomMargin=20
+        )
+
+        styles = getSampleStyleSheet()
+
+        elements = []
+
+        title = Paragraph(
+            f"<b>User Report: {user_first_name}</b>",
+            styles["Title"]
+        )
+
+        user_info = Paragraph(
+            f"""
+            <b>Name:</b> {user_first_name} {user_middle_name} {user_last_name}<br/>
+            <b>Email:</b> {user_email}<br/>
+            <b>Role:</b> {user_role}<br/>
+            <b>Rating:</b> {user_rating}<br/>
+            <b>Period:</b>
+            {date_from.strftime('%d.%m.%Y')} —
+            {date_to.strftime('%d.%m.%Y')}
+            """,
+            styles["BodyText"]
+        )
+
+        elements.append(title)
+        elements.append(Spacer(1, 20))
+        elements.append(user_info)
+        elements.append(Spacer(1, 20))
+
+        data = [
+            [
+                "ID",
+                "Title",
+                "Description",
+                "Status",
+                "Price",
+                "Created"
+            ]
+        ]
+
+        for order in orders:
+            description = (
+                order.description[:50] + "..."
+                if order.description and len(order.description) > 50
+                else order.description
+            )
+
+            data.append([
+                str(order.id),
+                str(order.title),
+                str(description),
+                str(order.status),
+                f"{float(order.price):,.2f} RUB",
+                order.created_at.strftime('%d.%m.%Y')
+            ])
+
+        table = Table(
+            data,
+            repeatRows=1,
+            colWidths=[40, 100, 180, 80, 80, 80]
+        )
+
+        table.setStyle(TableStyle([
+            ("BACKGROUND", (0, 0), (-1, 0), colors.grey),
+            ("TEXTCOLOR", (0, 0), (-1, 0), colors.whitesmoke),
+
+            ("ALIGN", (0, 0), (-1, -1), "CENTER"),
+
+            ("FONTNAME", (0, 0), (-1, 0), "Helvetica-Bold"),
+            ("FONTSIZE", (0, 0), (-1, -1), 9),
+
+            ("BOTTOMPADDING", (0, 0), (-1, 0), 10),
+
+            ("BACKGROUND", (0, 1), (-1, -1), colors.beige),
+
+            ("GRID", (0, 0), (-1, -1), 1, colors.black),
+
+            ("VALIGN", (0, 0), (-1, -1), "MIDDLE"),
+        ]))
+
+        elements.append(table)
+
+        doc.build(elements)
+
+        message = MessageSchema(
+            subject="Your PDF Report Is Ready",
+            recipients=[user_email],
+            body=f"""
+            <html>
+            <body>
+                <h2>Hello, {user_first_name}!</h2>
+                <p>
+                    Your PDF report for the period
+                    <b>{date_from.strftime('%d.%m.%Y')}</b> —
+                    <b>{date_to.strftime('%d.%m.%Y')}</b>
+                    is ready.
+                </p>
+                <p>The file is attached.</p>
+            </body>
+            </html>
+            """,
+            subtype=MessageType.html,
+            attachments=[filename]
+        )
+
+        try:
+            await fastmail.send_message(message)
+            print("EMAIL SENT")
+
+        except Exception as e:
+            print("EMAIL ERROR:", e)
