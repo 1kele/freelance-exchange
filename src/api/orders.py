@@ -2,6 +2,7 @@ from fastapi import APIRouter
 
 from src.api.dependencies import DBDep, CurrentUserDep
 from decimal import Decimal
+from fastapi_cache.decorator import cache
 
 from src.exceptions import PermissionDeniedException, PermissionDeniedHTTPException, ObjectNotFoundException, \
     ObjectNotFoundHTTPException, OrderNotInProgressException, OrderNotInProgressHTTPException, \
@@ -16,6 +17,7 @@ router = APIRouter(prefix="/orders", tags=["Заказы"])
 
 
 @router.get("")
+@cache(expire=30)
 async def get_orders_filter_by(
     db: DBDep,
     category: str | None = None,

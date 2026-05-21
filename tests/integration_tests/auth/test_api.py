@@ -91,7 +91,7 @@ async def test_partially_update_profile(auth_ac_customer):
     response = await auth_ac_customer.patch(
         "/auth/me",
         json={
-            "first_name": "NewName",
+            "first_name": "NewName1",
         }
     )
 

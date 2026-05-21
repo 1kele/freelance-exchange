@@ -1,4 +1,7 @@
 import pytest
+from unittest import mock
+
+mock.patch("fastapi_cache.decorator.cache", lambda *args, **kwargs: lambda f: f).start()
 
 from httpx import AsyncClient, ASGITransport
 from src.database import Base, engine_null_pool, async_session_maker_null_pool
@@ -6,7 +9,7 @@ from src.db_manager import DBManager
 from src.main import app
 from src.models import *
 from src.config import settings
-from src.schemas.user import PublicRole, AdminUserUpdate, AllRoles
+from src.schemas.user import AdminUserUpdate, AllRoles
 
 
 @pytest.fixture(scope="session",autouse=True)

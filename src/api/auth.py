@@ -106,7 +106,7 @@ async def create_pdf_report(
     return {"status": "OK"}
 
 
-@router.post("/me")
+@router.patch("/me")
 async def partially_update_profile(
     db: DBDep,
     data: UserPatch,
