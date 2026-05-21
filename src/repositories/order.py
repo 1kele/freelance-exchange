@@ -1,7 +1,6 @@
 from decimal import Decimal
 from typing import Any
 
-from pydantic import BaseModel
 
 from sqlalchemy import select
 from sqlalchemy.exc import NoResultFound

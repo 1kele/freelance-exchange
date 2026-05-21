@@ -2,7 +2,7 @@ import pytest
 
 from src.database import async_session_maker_null_pool
 from src.db_manager import DBManager
-from src.schemas.user import PublicRole, UserBlock, UserResponse
+from src.schemas.user import PublicRole, UserBlock
 
 
 @pytest.mark.parametrize(

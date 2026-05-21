@@ -5,7 +5,7 @@ from sqlalchemy import insert, select
 from src.exceptions import RoleNotFoundException
 from src.models.users import UserOrm
 from src.repositories.base import BaseRepositories
-from src.schemas.user import UserAddRequest, AllRoles, PublicRole, UserForAdmin
+from src.schemas.user import AllRoles, PublicRole, UserForAdmin
 
 
 class UserRepository(BaseRepositories):
