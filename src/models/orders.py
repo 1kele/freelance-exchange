@@ -16,10 +16,14 @@ class OrdersOrm(Base):
     price: Mapped[Decimal] = mapped_column(Numeric(10, 2), default=0)
     category: Mapped[str]
     deadline_days: Mapped[int]
-    deadline_date: Mapped[datetime.date | None] = mapped_column(nullable=True, default=None)
-    status: Mapped[str] = mapped_column(default='free')
+    deadline_date: Mapped[datetime.date | None] = mapped_column(
+        nullable=True, default=None
+    )
+    status: Mapped[str] = mapped_column(default="free")
 
-    customer_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
-    freelancer_id: Mapped[int | None] = mapped_column(ForeignKey('users.id'), nullable=True, default=None)
+    customer_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
+    freelancer_id: Mapped[int | None] = mapped_column(
+        ForeignKey("users.id"), nullable=True, default=None
+    )
     created_at: Mapped[datetime.date] = mapped_column(server_default=func.now())
     is_overdue: Mapped[bool] = mapped_column(default=False)

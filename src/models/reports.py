@@ -7,10 +7,10 @@ from src.database import Base
 
 
 class ReportsOrm(Base):
-    __tablename__ = 'reports'
+    __tablename__ = "reports"
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    user_id: Mapped[int] = mapped_column(ForeignKey('users.id'))
+    user_id: Mapped[int] = mapped_column(ForeignKey("users.id"))
     status: Mapped[str]  # pending/ready
 
     file_path: Mapped[str]

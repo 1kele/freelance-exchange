@@ -4,13 +4,23 @@ from fastapi import APIRouter, Response, Body
 
 from src.api.dependencies import DBDep, CurrentUserDep
 from src.celery_tasks.tasks import create_report_exel, create_report_pdf
-from src.exceptions import ObjectNotFoundException, WrongPasswordException, ObjectNotFoundHTTPException, \
-    WrongPasswordHTTPException, PermissionDeniedHTTPException, PermissionDeniedException, UserIsBlockedException, \
-    UserIsBlockedHTTPException, UserAlreadyExistsException, UserAlreadyExistsHTTPException
+from src.exceptions import (
+    ObjectNotFoundException,
+    WrongPasswordException,
+    ObjectNotFoundHTTPException,
+    WrongPasswordHTTPException,
+    PermissionDeniedHTTPException,
+    PermissionDeniedException,
+    UserIsBlockedException,
+    UserIsBlockedHTTPException,
+    UserAlreadyExistsException,
+    UserAlreadyExistsHTTPException,
+)
 from src.schemas.user import UserAddRequest, UserLogin, UserPatch
 from src.services.auths import AuthenticationService
 
 router = APIRouter(prefix="/auth", tags=["Аунтефикация и Авторизация"])
+
 
 @router.post("/register")
 async def register(
@@ -29,7 +39,8 @@ async def register(
 async def login(
     db: DBDep,
     response: Response,
-    data: UserLogin = Body(openapi_examples={
+    data: UserLogin = Body(
+        openapi_examples={
             "1": {
                 "summary": "Тест 1(Customer)",
                 "value": {"email": "karate@gmail.com", "password": "RoyalOAK"},
@@ -42,10 +53,11 @@ async def login(
                 "summary": "Тест 3(Administrator)",
                 "value": {"email": "avadakedavra@pes.cot", "password": "RolexDateJust"},
             },
-        })
+        }
+    ),
 ):
     try:
-        access_token = await AuthenticationService(db).login(data,response)
+        access_token = await AuthenticationService(db).login(data, response)
     except WrongPasswordException:
         raise WrongPasswordHTTPException
     except ObjectNotFoundException:
@@ -56,10 +68,7 @@ async def login(
 
 
 @router.get("/get_me")
-async def get_me(
-    db: DBDep,
-    current_user: CurrentUserDep
-):
+async def get_me(db: DBDep, current_user: CurrentUserDep):
     result = await AuthenticationService(db).get_me(current_user)
     return {"data": result}
 
@@ -70,7 +79,7 @@ async def create_exel_report(
     date_to: datetime,
     current_user: CurrentUserDep,
 ):
-    create_report_exel.delay(
+    create_report_exel.delay( #type: ignore
         date_from.isoformat(),
         date_to.isoformat(),
         current_user.id,
@@ -79,7 +88,7 @@ async def create_exel_report(
         current_user.first_name,
         current_user.middle_name,
         current_user.last_name,
-        current_user.rating
+        current_user.rating,
     )
 
     return {"status": "OK"}
@@ -91,7 +100,7 @@ async def create_pdf_report(
     date_to: datetime,
     current_user: CurrentUserDep,
 ):
-    create_report_pdf.delay(
+    create_report_pdf.delay( #type: ignore
         date_from.isoformat(),
         date_to.isoformat(),
         current_user.id,
@@ -100,7 +109,7 @@ async def create_pdf_report(
         current_user.first_name,
         current_user.middle_name,
         current_user.last_name,
-        current_user.rating
+        current_user.rating,
     )
 
     return {"status": "OK"}
@@ -120,9 +129,6 @@ async def partially_update_profile(
 
 
 @router.post("/logout")
-async def logout(
-    db: DBDep,
-    response: Response
-):
+async def logout(db: DBDep, response: Response):
     await AuthenticationService(db).logout(response)
     return {"status": "OK"}

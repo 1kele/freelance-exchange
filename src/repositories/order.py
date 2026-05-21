@@ -1,4 +1,5 @@
 from decimal import Decimal
+from typing import Any
 
 from pydantic import BaseModel
 
@@ -15,7 +16,9 @@ class OrderRepository(BaseRepositories):
     model = OrdersOrm
     schema = Order
 
-    async def get_orders_with_filters(self, category: str, price_to: Decimal) -> list[BaseModel]:
+    async def get_orders_with_filters(
+        self, category: str | None, price_to: Decimal | None
+    ) -> list[Any]:
         query = select(self.model).where(self.model.status == OrderStatus.free)
         if category:
             query = query.where(self.model.category == category)
@@ -45,7 +48,7 @@ class OrderRepository(BaseRepositories):
         status: str | None = None,
         category: str | None = None,
         limit: int | None = 10,
-        offset: int | None = 0
+        offset: int | None = 0,
     ):
         query = select(self.model)
 

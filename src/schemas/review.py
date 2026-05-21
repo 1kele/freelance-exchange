@@ -10,6 +10,7 @@ class ReviewAddRequest(BaseModel):
     rating: int = Field(ge=1, le=5)
     text: str | None = None
 
+
 class ReviewAdd(BaseModel):
     order_id: int
     target_id: int
@@ -25,6 +26,7 @@ class Review(BaseModel):
     rating: float = Field(ge=1, le=5)
     text: str
     created_at: datetime
+
 
 class ShowReview(BaseModel):
     text: str

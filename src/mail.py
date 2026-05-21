@@ -1,8 +1,9 @@
-from fastapi_mail import FastMail, MessageSchema, ConnectionConfig
+from fastapi_mail import FastMail, ConnectionConfig
+from pydantic import SecretStr
 
 conf = ConnectionConfig(
     MAIL_FROM="abracadabra@eshkere.com",
-    MAIL_PASSWORD="6f86fa14cb051c",
+    MAIL_PASSWORD=SecretStr("6f86fa14cb051c"),
     MAIL_FROM_NAME="Freelance Exchange",
     MAIL_USERNAME="a701dadb85d23c",
     MAIL_PORT=2525,

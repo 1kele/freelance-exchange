@@ -18,11 +18,13 @@ from src.api.profiles import router as profile_router
 from src.api.reviews import router as review_router
 from src.api.admins import router as admin_router
 
+
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     redis = aioredis.from_url("redis://localhost")
     FastAPICache.init(RedisBackend(redis), prefix="fastapi-cache")
     yield
+
 
 app = FastAPI(docs_url=None, lifespan=lifespan)
 

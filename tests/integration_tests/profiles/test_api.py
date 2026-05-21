@@ -1,5 +1,3 @@
-
-
 async def test_get_profile(auth_ac_customer):
     responses = await auth_ac_customer.get("/profiles/1")
 

@@ -1,20 +1,20 @@
 import jwt
 
-from fastapi import Depends, HTTPException, Request,Query
+from fastapi import Depends, HTTPException, Request, Query
 from typing import Annotated
 
-from pydantic import BaseModel
 
 from src.config import settings
 from src.database import async_session_maker
 from src.db_manager import DBManager
 from src.exceptions import ObjectNotFoundException
-from src.schemas.user import UserResponse, User, AllRoles
+from src.schemas.user import User, AllRoles
 
 
 async def get_db():
     async with DBManager(session_factory=async_session_maker) as db:
         yield db
+
 
 DBDep = Annotated[DBManager, Depends(get_db)]
 
@@ -50,6 +50,7 @@ async def get_current_user(request: Request, db: DBDep):
 
     return current_user
 
+
 CurrentUserDep = Annotated[User, Depends(get_current_user)]
 
 
@@ -57,10 +58,13 @@ class PaginationParams:
     def __init__(
         self,
         page: int = Query(1, description="Номер страницы", ge=1),
-        per_page: int = Query(10, description="Количество на одной странице", ge=1, lt=30)
+        per_page: int = Query(
+            10, description="Количество на одной странице", ge=1, lt=30
+        ),
     ):
         self.page = page
         self.per_page = per_page
+
 
 PaginationDep = Annotated[PaginationParams, Depends(PaginationParams)]
 
@@ -69,5 +73,6 @@ async def get_current_admin(current_user: CurrentUserDep):
     if current_user.role != AllRoles.admin:
         raise HTTPException(status_code=403, detail="Недостаточно прав")
     return current_user
+
 
 AdminDep = Annotated[User, Depends(get_current_admin)]

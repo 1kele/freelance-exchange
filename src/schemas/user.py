@@ -8,14 +8,17 @@ class PublicRole(str, Enum):
     customer = "customer"
     freelancer = "freelancer"
 
+
 class AllRoles(str, Enum):
     customer = "customer"
     freelancer = "freelancer"
     admin = "admin"
 
+
 class UserLogin(BaseModel):
     email: EmailStr
     password: str
+
 
 class UserAddRequest(BaseModel):
     username: str
@@ -28,6 +31,7 @@ class UserAddRequest(BaseModel):
 
     role: PublicRole
 
+
 class UserAdd(BaseModel):
     username: str
     email: EmailStr
@@ -38,6 +42,7 @@ class UserAdd(BaseModel):
     middle_name: str
 
     role: PublicRole
+
 
 class User(BaseModel):
     id: int
@@ -53,6 +58,7 @@ class User(BaseModel):
     created_at: datetime
     model_config = ConfigDict(from_attributes=True)
 
+
 class UserResponse(BaseModel):
     id: int
     email: EmailStr
@@ -66,6 +72,7 @@ class UserResponse(BaseModel):
 
     model_config = ConfigDict(from_attributes=True)
 
+
 class UserPatch(BaseModel):
     username: str | None = None
     email: EmailStr | None = None
@@ -75,6 +82,7 @@ class UserPatch(BaseModel):
     middle_name: str | None = None
 
     role: PublicRole | None = None
+
 
 class PublicUserInformation(BaseModel):
     id: int
@@ -91,8 +99,10 @@ class PublicUserInformation(BaseModel):
 class AdminUserUpdate(BaseModel):
     role: AllRoles
 
+
 class UserAVGRating(BaseModel):
     rating: float
+
 
 class UserForAdmin(BaseModel):
     id: int
@@ -105,6 +115,7 @@ class UserForAdmin(BaseModel):
     is_blocked: bool
     rating: float
     created_at: datetime
+
 
 class UserBlock(BaseModel):
     is_blocked: bool

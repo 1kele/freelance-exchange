@@ -4,8 +4,6 @@ from src.services.base import BaseService
 
 
 class ProfileService(BaseService):
-
-
     async def get_profile(self, user_id: int) -> PublicUserInformation:
         try:
             user = await self.db.user.get_one(id=user_id)
