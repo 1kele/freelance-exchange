@@ -22,4 +22,4 @@ services:
 
 networks:
   freelance_network:
-    driver: bridge
+    external: true
