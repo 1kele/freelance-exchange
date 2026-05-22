@@ -26,7 +26,7 @@ async def lifespan(app: FastAPI):
     yield
 
 
-app = FastAPI(docs_url=None, lifespan=lifespan)
+app = FastAPI(lifespan=lifespan)
 
 app.include_router(auth_router)
 app.include_router(order_router)

@@ -3,7 +3,8 @@ from datetime import datetime
 from fastapi import APIRouter, Response, Body
 
 from src.api.dependencies import DBDep, CurrentUserDep
-from src.celery_tasks.tasks import create_report_exel, create_report_pdf
+from src.broker.producer import publish_pdf_report
+from src.celery_tasks.tasks import create_report_exel
 from src.exceptions import (
     ObjectNotFoundException,
     WrongPasswordException,
@@ -100,16 +101,10 @@ async def create_pdf_report(
     date_to: datetime,
     current_user: CurrentUserDep,
 ):
-    create_report_pdf.delay( #type: ignore
-        date_from.isoformat(),
-        date_to.isoformat(),
-        current_user.id,
-        current_user.role,
-        current_user.email,
-        current_user.first_name,
-        current_user.middle_name,
-        current_user.last_name,
-        current_user.rating,
+    publish_pdf_report(
+        user_id=current_user.id,
+        date_from=date_from.isoformat(),
+        date_to=date_to.isoformat(),
     )
 
     return {"status": "OK"}

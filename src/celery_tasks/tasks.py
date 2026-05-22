@@ -45,33 +45,6 @@ def create_report_exel(
     )
 
 
-@celery_instance.task
-def create_report_pdf(
-    date_from: str,
-    date_to: str,
-    user_id: int,
-    user_role: AllRoles,
-    user_email: str,
-    user_first_name: str,
-    user_middle_name: str,
-    user_last_name: str,
-    user_rating: float,
-):
-    asyncio.run(
-        _create_pdf_report_async(
-            date_from,
-            date_to,
-            user_id,
-            user_role,
-            user_email,
-            user_first_name,
-            user_middle_name,
-            user_last_name,
-            user_rating,
-        )
-    )
-
-
 async def _create_exel_report_async(
     date_from: str,
     date_to: str,
@@ -224,31 +197,23 @@ async def _create_exel_report_async(
 
 
 async def _create_pdf_report_async(
+    user_id: int,
     date_from: str,
     date_to: str,
-    user_id: int,
-    user_role: AllRoles,
-    user_email: str,
-    user_first_name: str,
-    user_middle_name: str,
-    user_last_name: str,
-    user_rating: float,
 ):
-    date_from_str = date_from
-    date_to_str = date_to
-
-    date_from_dt = datetime.fromisoformat(date_from_str) # type: ignore
-    date_to_dt = datetime.fromisoformat(date_to_str) # type: ignore
+    date_from_dt = datetime.fromisoformat(date_from) # type: ignore
+    date_to_dt = datetime.fromisoformat(date_to) # type: ignore
 
     async with DBManager(session_factory=async_session_maker_null_pool) as db:
-        if user_role == AllRoles.customer:
+        current_user = await db.user.get_one(id=user_id)
+        if current_user.role == AllRoles.customer:
             orders = await db.order.get_by_date_range(
-                date_from=date_from, date_to=date_to, customer_id=user_id
+                date_from=date_from_dt, date_to=date_to_dt, customer_id=user_id
             )
 
-        elif user_role == AllRoles.freelancer:
+        elif current_user.role == AllRoles.freelancer:
             orders = await db.order.get_filter_by(
-                date_from=date_from, date_to=date_to, customer_id=user_id
+                date_from=date_from_dt, date_to=date_to_dt, customer_id=user_id
             )
 
         else:
@@ -269,14 +234,14 @@ async def _create_pdf_report_async(
 
         elements = []
 
-        title = Paragraph(f"<b>User Report: {user_first_name}</b>", styles["Title"])
+        title = Paragraph(f"<b>User Report: {current_user.first_name}</b>", styles["Title"])
 
         user_info = Paragraph(
             f"""
-            <b>Name:</b> {user_first_name} {user_middle_name} {user_last_name}<br/>
-            <b>Email:</b> {user_email}<br/>
-            <b>Role:</b> {user_role}<br/>
-            <b>Rating:</b> {user_rating}<br/>
+            <b>Name:</b> {current_user.first_name} {current_user.middle_name} {current_user.last_name}<br/>
+            <b>Email:</b> {current_user.email}<br/>
+            <b>Role:</b> {current_user.role}<br/>
+            <b>Rating:</b> {current_user.rating}<br/>
             <b>Period:</b>
             {date_from_dt.strftime("%d.%m.%Y")} —
             {date_to_dt.strftime("%d.%m.%Y")}
@@ -333,11 +298,11 @@ async def _create_pdf_report_async(
 
         message = MessageSchema(
             subject="Your PDF Report Is Ready",
-            recipients=[NameEmail(name=user_first_name, email=user_email)],
+            recipients=[NameEmail(name=current_user.first_name, email=current_user.email)],
             body=f"""
             <html>
             <body>
-                <h2>Hello, {user_first_name}!</h2>
+                <h2>Hello, {current_user.first_name}!</h2>
                 <p>
                     Your PDF report for the period
                     <b>{date_from_dt.strftime("%d.%m.%Y")}</b> —
