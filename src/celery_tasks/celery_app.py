@@ -1,7 +1,10 @@
 from celery import Celery
 
+from src.config import settings
+
 celery_instance = Celery(
     "celery_tasks",
-    broker="amqp://guest:guest@localhost:5672//",
+    broker=settings.RABBITMQ_URL,
     include=["src.celery_tasks.tasks"],
 )
+

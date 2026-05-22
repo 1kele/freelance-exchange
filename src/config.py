@@ -16,10 +16,19 @@ class Settings(BaseSettings):
     ALGORITHM: str
     ACCESS_TOKEN_EXPIRE_MINUTES: int
 
+    REDIS_HOST: str
+    REDIS_PORT: int
+
+    RABBITMQ_HOST: str
+    RABBITMQ_PORT: int
+
     @property
     def DB_URL(self):
         return f"postgresql+asyncpg://{self.DB_USER}:{self.DB_PASS}@{self.DB_HOST}:{self.DB_PORT}/{self.DB_NAME}"
 
+    @property
+    def RABBITMQ_URL(self):
+        return f"amqp://guest:guest@{self.RABBITMQ_HOST}:{self.RABBITMQ_PORT}//"
     model_config = SettingsConfigDict(env_file=".env")
 
 

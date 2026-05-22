@@ -64,11 +64,11 @@ async def _create_exel_report_async(
     async with DBManager(session_factory=async_session_maker_null_pool) as db:
         if user_role == AllRoles.customer:
             orders = await db.order.get_by_date_range(
-                date_from=date_from, date_to=date_to, customer_id=user_id
+                date_from=date_from_dt, date_to=date_to_dt, customer_id=user_id
             )
         elif user_role == AllRoles.freelancer:
             orders = await db.order.get_filter_by(
-                date_from=date_from, date_to=date_to, customer_id=user_id
+                date_from=date_from_dt, date_to=date_to_dt, customer_id=user_id
             )
         else:
             raise ObjectNotFoundHTTPException
@@ -89,7 +89,7 @@ async def _create_exel_report_async(
         sheet["B4"] = user_rating
         sheet["B4"].alignment = Alignment(horizontal="left", vertical="center")
         sheet["B5"] = (
-            f"{date_from.strftime('%d.%m.%Y')} — {date_to.strftime('%d.%m.%Y')}" # type: ignore
+            f"{date_from_dt.strftime('%d.%m.%Y')} — {date_to_dt.strftime('%d.%m.%Y')}" # type: ignore
         )
 
         sheet.column_dimensions["B"].width = 40
@@ -160,11 +160,11 @@ async def _create_exel_report_async(
         sheet.cell(row=row, column=4).value = all_orders # type: ignore
         sheet.cell(row=row, column=5).value = completed_orders # type: ignore
         sheet.cell(row=row, column=6).value = canceled_order # type: ignore
-        sheet.cell(row=row, column=7).value = float(completed_orders / all_orders) # type: ignore
+        sheet.cell(row=row, column=7).value = float(completed_orders / all_orders) if all_orders != 0 else 0 # type: ignore
         sheet.cell(row=row, column=7).number_format = "0.0%" # type: ignore
         sheet.cell(row=row, column=8).value = total_sum # type: ignore
         sheet.cell(row=row, column=8).number_format = "#,##0.00 ₽" # type: ignore
-        sheet.cell(row=row, column=9).value = float(total_sum / all_orders) # type: ignore
+        sheet.cell(row=row, column=9).value = float(total_sum / all_orders) if all_orders != 0 else 0  # type: ignore
         sheet.cell(row=row, column=9).number_format = "#,##0.00 ₽" # type: ignore
 
         filename = f"report_{user_id}_{datetime.now().strftime('%Y%m%d_%H%M%S')}.xlsx"

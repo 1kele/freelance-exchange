@@ -3,10 +3,11 @@ import json
 
 from pika import BlockingConnection, ConnectionParameters
 from src.celery_tasks.tasks import _create_pdf_report_async
+from src.config import settings
 
 connection_parameters = ConnectionParameters(
-    host="localhost",
-    port=5672,
+    host=settings.RABBITMQ_HOST,
+    port=settings.RABBITMQ_PORT,
 )
 
 def callback(ch, method, propertie, body):
